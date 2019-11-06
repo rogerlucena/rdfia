@@ -12,8 +12,8 @@ def init_params(nx, nh, ny):
 
     n = torch.distributions.Normal(torch.tensor(0.0), torch.tensor(0.3))
 
-    params["wh"] = n.sample((nx, nh))
-    params["wy"] = n.sample((nh, ny))
+    params["Wh"] = n.sample((nx, nh))
+    params["Wy"] = n.sample((nh, ny))
     params["bh"] = n.sample((nh,))
     params["by"] = n.sample((ny,))
 
@@ -26,18 +26,21 @@ def forward(params, X):
     # TODO remplir avec les paramètres X, htilde, h, ytilde, yhat
     # outputs["X"] = ...
 
-    outputs["htilde"] = X.mm(params["wh"]).add(params["bh"])
-    outputs["h"] = torch.tanh(outputs["htilde"])
-    outputs["ytilde"]  = outputs["h"].mm(params["wy"]).add(params["by"])
-    outputs["yhat"] = torch.nn.functional.softmax(outputs["ytilde"], dim=1)
+    outputs["X"] = X
+    outputs["htilde"] = X.mm(params["Wh"]).add(params["bh"]) # nbatch x nh
+    outputs["h"] = torch.tanh(outputs["htilde"]) # nbatch x nh
+    outputs["ytilde"]  = outputs["h"].mm(params["Wy"]).add(params["by"]) # nbatch x ny
+    outputs["yhat"] = torch.nn.functional.softmax(outputs["ytilde"], dim=1) # nbatch x ny
 
     return outputs['yhat'], outputs
 
 def loss_accuracy(Yhat, Y):
     # TODO
     L = ((-1)*torch.log(Yhat)*Y).sum().item()
-    Yprevs = torch.argmax(Yhat, dim=1)
-    # print("Yprevs: \n", Yprevs)
+    Yprevs = torch.argmax(Yhat, dim=1) # nbatch x 1
+    # print('Yprevs.shape: ', Yprevs.shape)
+    # print("Y.sum():\n", Y.sum(dim=0))
+    # print("Yprevs:\n", Yprevs)
     # print('Yprevs.sum(): ', Yprevs.sum())
     Yargmax = torch.argmax(Y, dim=1)
     acc = (Yprevs == Yargmax).sum().item() / Y.shape[0]
@@ -50,6 +53,14 @@ def backward(params, outputs, Y):
 
     # TODO remplir avec les paramètres Wy, Wh, by, bh
     # grads["Wy"] = ...
+
+    # Remember: the dimensions of Wy and Wh in "formulas.pdf" transposed compared to the same dimensions here
+    grad_ytilde = outputs["yhat"] - Y # nbatch x ny
+    grads["Wy"] = ((grad_ytilde.T).mm(outputs["h"])).T # nh x ny
+    grads["by"] = (grad_ytilde.sum(dim=0)).T # ny x 1 
+    grad_htilde = (grad_ytilde.mm(params["Wy"].T)).mul(1-outputs["h"].mul(outputs["h"])) # nbatch x nh
+    grads["Wh"] = (grad_htilde.T.mm(outputs["X"])).T # nx x nh
+    grads["bh"] = (grad_htilde.sum(dim=0)).T # nh x 1
 
     return grads
 

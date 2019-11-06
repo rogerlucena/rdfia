@@ -1,7 +1,7 @@
 # import torch
 
 from tme5 import CirclesData  # import de la classe
-from circles import init_params, forward, loss_accuracy
+from circles import init_params, forward, loss_accuracy, backward
 
 if __name__ == '__main__':
     # Chargement de la classe
@@ -29,10 +29,11 @@ if __name__ == '__main__':
     nh = 6
     ny = 2
     params = init_params(nx, nh, ny)
-    Yhat, _ = forward(params, data.Xtrain)
+    Yhat, outputs = forward(params, data.Xtrain)
     # print(Yhat)
 
     L = loss_accuracy(Yhat, Ytrain)
+    print('loss_accuracy: ', L)
 
     # Ygrid = forward(params, data.Xgrid) # calcul des predictions Y pour tous les points
     # -> de la grille (forward et params non fournis, `a coder) data.plot_data_with_grid(Ygrid) # affichage des points et de la fronti`ere de
@@ -42,3 +43,13 @@ if __name__ == '__main__':
     # -> delossetaccuracyentrainettest.Lesvaleursa`fournirsontdesscalaires,
     #-> elles sont stock ́ees pour vous, il suffit de passer les nouvelles valeurs a`
     # -> chaque ite ́ration
+
+    grads = backward(params, outputs, Ytrain)
+    # print('nx: ', nx)
+    # print('ny: ', ny)
+    # print('nh: ', nh)
+    # print('grads["Wy"].shape: ', grads["Wy"].shape) # must be: nh x ny
+    # print('grads["by"].shape: ', grads["by"].shape) # must be: ny x 1 
+    # print('grads["Wh"].shape: ', grads["Wh"].shape) # must be: nx x nh
+    # print('grads["bh"].shape: ', grads["bh"].shape) # must be: nh x 1
+    
