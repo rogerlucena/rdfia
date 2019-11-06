@@ -1,7 +1,7 @@
 # import torch
 
 from tme5 import CirclesData  # import de la classe
-from circles import init_params, forward, loss_accuracy, backward
+from circles import init_params, forward, loss_accuracy, backward, sgd
 
 if __name__ == '__main__':
     # Chargement de la classe
@@ -44,6 +44,7 @@ if __name__ == '__main__':
     #-> elles sont stock ́ees pour vous, il suffit de passer les nouvelles valeurs a`
     # -> chaque ite ́ration
 
+    # Backward section
     grads = backward(params, outputs, Ytrain)
     # print('nx: ', nx)
     # print('ny: ', ny)
@@ -52,4 +53,9 @@ if __name__ == '__main__':
     # print('grads["by"].shape: ', grads["by"].shape) # must be: ny x 1 
     # print('grads["Wh"].shape: ', grads["Wh"].shape) # must be: nx x nh
     # print('grads["bh"].shape: ', grads["bh"].shape) # must be: nh x 1
+
+    # SGD section
+    # print('Wy:\n', params["Wy"])
+    params = sgd(params, grads, eta = 1e-2)
+    # print('new Wy:\n', params["Wy"])
     

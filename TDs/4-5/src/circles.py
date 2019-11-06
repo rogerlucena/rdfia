@@ -67,6 +67,11 @@ def backward(params, outputs, Y):
 def sgd(params, grads, eta):
     # TODO mettre à jour le contenu de params
 
+    params["Wy"] -= grads["Wy"] * eta
+    params["by"] -= grads["by"] * eta
+    params["Wh"] -= grads["Wh"] * eta
+    params["bh"] -= grads["bh"] * eta
+
     return params
 
 
@@ -82,15 +87,32 @@ if __name__ == '__main__':
     nh = 10
     ny = data.Ytrain.shape[1]
     eta = 0.03
-
-    # Premiers tests, code à modifier
-    params = init_params(nx, nh, xy)
-    Yhat, outs = forward(params, data.Xtrain)
-    L, _ = loss_accuracy(Yhat, Y)
-    grads = backward(params, outputs, Y)
-    params = sgd(params, grads, eta)
+    Nepoch = 100
+    print('Data set size: ', N) # 200 here
+    params = init_params(nx, nh, ny)
 
     # TODO apprentissage
+    for i in range(Nepoch):
+        for j in range(int(N/Nbatch)):
+            X = torch.from_numpy(data._Xtrain[j * Nbatch : (j+1) * Nbatch])
+            Y = torch.from_numpy(data._Ytrain[j * Nbatch : (j+1) * Nbatch])
+            Yhat, outputs = forward(params, X)
+            L, accuracy = loss_accuracy(Yhat, Y)
+            grads = backward(params, outputs, Y)
+            params = sgd(params, grads, eta)
+
+        if i % 5 == 0:
+            print('Epoch: ', i)
+            # Training set
+            Yhat, _ = forward(params, torch.from_numpy(data._Xtrain))
+            L, accuracy = loss_accuracy(Yhat, torch.from_numpy(data._Ytrain))
+            print('loss: ', L, '; accuracy: ', accuracy)
+
+            # Testing set
+            Yhat, _ = forward(params, torch.from_numpy(data._Xtest))
+            L, accuracy = loss_accuracy(Yhat, torch.from_numpy(data._Ytest))
+            print('loss: ', L, '; accuracy: ', accuracy)
+
 
     # attendre un appui sur une touche pour garder les figures
     input("done")
