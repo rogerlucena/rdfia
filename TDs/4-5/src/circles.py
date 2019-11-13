@@ -82,12 +82,12 @@ if __name__ == '__main__':
     data = CirclesData()
     data.plot_data()
     N = data.Xtrain.shape[0]
+    Nepoch = 100
     Nbatch = 10
     nx = data.Xtrain.shape[1]
     nh = 10
     ny = data.Ytrain.shape[1]
     eta = 0.03
-    Nepoch = 100
     print('Data set size: ', N) # 200 here
     params = init_params(nx, nh, ny)
 
