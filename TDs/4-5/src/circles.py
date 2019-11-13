@@ -80,16 +80,19 @@ if __name__ == '__main__':
 
     # init
     data = CirclesData()
-    data.plot_data()
+    # data.plot_data()
     N = data.Xtrain.shape[0]
-    Nepoch = 100
+    Nepoch = 1500 # 3000
     Nbatch = 10
     nx = data.Xtrain.shape[1]
     nh = 10
     ny = data.Ytrain.shape[1]
-    eta = 0.03
+    eta = 0.2
     print('Data set size: ', N) # 200 here
     params = init_params(nx, nh, ny)
+    printInterval = 100
+    trainLosses = []
+    testLosses = []
 
     # TODO apprentissage
     for i in range(Nepoch):
@@ -101,18 +104,35 @@ if __name__ == '__main__':
             grads = backward(params, outputs, Y)
             params = sgd(params, grads, eta)
 
-        if i % 5 == 0:
-            print('Epoch: ', i)
+        if i % printInterval == 0:
+            print('- Epoch: ', i)
             # Training set
             Yhat, _ = forward(params, torch.from_numpy(data._Xtrain))
             L, accuracy = loss_accuracy(Yhat, torch.from_numpy(data._Ytrain))
-            print('loss: ', L, '; accuracy: ', accuracy)
+            trainLosses.append(L)
+            print(' Training set:\n', '   loss: ', L, '; accuracy: ', accuracy, sep='')
 
             # Testing set
             Yhat, _ = forward(params, torch.from_numpy(data._Xtest))
             L, accuracy = loss_accuracy(Yhat, torch.from_numpy(data._Ytest))
-            print('loss: ', L, '; accuracy: ', accuracy)
+            print(' Test set:\n', '   loss: ', L, '; accuracy: ', accuracy, sep='')
+            testLosses.append(L)
 
+            Ygrid, _ = forward(params, data.Xgrid)
+            data.plot_data_with_grid(Ygrid)
+
+    x = np.arange(0, Nepoch, printInterval)
+    trainLosses = np.array(trainLosses)
+    testLosses = np.array(testLosses)
+    plt.close()
+    plt.clf()
+    plt.ylabel('Losses')
+    plt.xlabel('Epoch')
+    plt.title('Train loss and Test loss with time')
+    plt.grid(True)
+    plt.plot(x, trainLosses, 'b--', x, testLosses, 'r--')
+    plt.legend(['Train loss', 'Test loss'], loc=1)
+    plt.show()
 
     # attendre un appui sur une touche pour garder les figures
-    input("done")
+    # input("done")
