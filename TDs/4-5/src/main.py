@@ -33,7 +33,7 @@ if __name__ == '__main__':
     # print(Yhat)
 
     L = loss_accuracy(Yhat, Ytrain)
-    print('loss_accuracy: ', L)
+    print('loss_accuracy: ', L[0].item(), L[1])
 
     # Ygrid = forward(params, data.Xgrid) # calcul des predictions Y pour tous les points
     # -> de la grille (forward et params non fournis, `a coder) data.plot_data_with_grid(Ygrid) # affichage des points et de la fronti`ere de

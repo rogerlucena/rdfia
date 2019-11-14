@@ -1,8 +1,8 @@
-import math
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
 from tme5 import CirclesData
+
 
 def init_params(nx, nh, ny):
     params = {}
@@ -16,6 +16,11 @@ def init_params(nx, nh, ny):
     params["Wy"] = n.sample((nh, ny))
     params["bh"] = n.sample((nh,))
     params["by"] = n.sample((ny,))
+    
+    params["Wh"].requires_grad = True
+    params["Wy"].requires_grad = True
+    params["bh"].requires_grad = True
+    params["by"].requires_grad = True
 
     return params
 
@@ -34,6 +39,7 @@ def forward(params, X):
 
     return outputs['yhat'], outputs
 
+
 def loss_accuracy(Yhat, Y):
     # TODO
     L = ((-1)*torch.log(Yhat)*Y).sum()
@@ -48,32 +54,23 @@ def loss_accuracy(Yhat, Y):
     # print("acc: ", acc)
     return L, acc
 
-def backward(params, outputs, Y):
-    grads = {}
 
-    # TODO remplir avec les paramètres Wy, Wh, by, bh
-    # grads["Wy"] = ...
-
-    # Remember: the dimensions of Wy and Wh in "formulas.pdf" transposed compared to the same dimensions here
-    grad_ytilde = outputs["yhat"] - Y # nbatch x ny
-    grads["Wy"] = ((grad_ytilde.T).mm(outputs["h"])).T # nh x ny
-    grads["by"] = (grad_ytilde.sum(dim=0)).T # ny x 1 
-    grad_htilde = (grad_ytilde.mm(params["Wy"].T)).mul(1-outputs["h"].mul(outputs["h"])) # nbatch x nh
-    grads["Wh"] = (grad_htilde.T.mm(outputs["X"])).T # nx x nh
-    grads["bh"] = (grad_htilde.sum(dim=0)).T # nh x 1
-
-    return grads
-
-def sgd(params, grads, eta):
+def sgd(params, eta):
     # TODO mettre à jour le contenu de params
 
-    params["Wy"] -= grads["Wy"] * eta
-    params["by"] -= grads["by"] * eta
-    params["Wh"] -= grads["Wh"] * eta
-    params["bh"] -= grads["bh"] * eta
+    with torch.no_grad():
+        params['Wy'] -= params['Wy'].grad * eta 
+        params['by'] -= params['by'].grad * eta 
+        params['Wh'] -= params['Wh'].grad * eta 
+        params['bh'] -= params['bh'].grad * eta 
+
+        # remet l'accumulateur de gradient à zéro
+        params['Wy'].grad.zero_() 
+        params['by'].grad.zero_()
+        params['Wh'].grad.zero_()
+        params['bh'].grad.zero_()
 
     return params
-
 
 
 if __name__ == '__main__':
@@ -82,13 +79,13 @@ if __name__ == '__main__':
     data = CirclesData()
     # data.plot_data()
     N = data.Xtrain.shape[0]
-    Nepoch = 1500 # 3000
+    Nepoch = 1500  # 3000
     Nbatch = 10
     nx = data.Xtrain.shape[1]
     nh = 10
     ny = data.Ytrain.shape[1]
     eta = 0.2
-    print('Data set size: ', N) # 200 here
+    print('Data set size: ', N)  # 200 here
     params = init_params(nx, nh, ny)
     printInterval = 100
     trainLosses = []
@@ -101,8 +98,11 @@ if __name__ == '__main__':
             Y = torch.from_numpy(data._Ytrain[j * Nbatch : (j+1) * Nbatch])
             Yhat, outputs = forward(params, X)
             L, accuracy = loss_accuracy(Yhat, Y)
-            grads = backward(params, outputs, Y)
-            params = sgd(params, grads, eta)
+
+            # grads = backward(params, outputs, Y)
+            L.backward()
+
+            params = sgd(params, eta)
 
         if i % printInterval == 0:
             print('- Epoch: ', i)
@@ -119,7 +119,7 @@ if __name__ == '__main__':
             testLosses.append(L.item())
 
             Ygrid, _ = forward(params, data.Xgrid)
-            data.plot_data_with_grid(Ygrid)
+            data.plot_data_with_grid(Ygrid.detach())
 
     x = np.arange(0, Nepoch, printInterval)
     trainLosses = np.array(trainLosses)
