@@ -8,7 +8,7 @@ def init_model(nx, nh, ny, eta):
         torch.nn.Linear(nx, nh),
         torch.nn.Tanh(),
         torch.nn.Linear(nh, ny)
-        # torch.nn.Softmax()
+        # torch.nn.Softmax(dim=1)
     )
 
     loss = torch.nn.CrossEntropyLoss()
@@ -20,7 +20,7 @@ def init_model(nx, nh, ny, eta):
 def loss_accuracy(Ytilde, Y, loss):
     # TODO
 
-    Yhat = torch.nn.Softmax()(Ytilde)
+    Yhat = torch.nn.Softmax(dim=1)(Ytilde)
     Yprevs = torch.argmax(Yhat, dim=1) # nbatch x 1
     # print('Yprevs.shape: ', Yprevs.shape)
     # print("Y.sum():\n", Y.sum(dim=0))
@@ -34,17 +34,6 @@ def loss_accuracy(Ytilde, Y, loss):
     # print("acc: ", acc)
     L = loss(Ytilde, Yargmax)
     return L, acc
-
-
-# def sgd(model, eta):
-#     # TODO mettre à jour le contenu de params
-
-#     with torch.no_grad():
-#         for param in model.parameters():
-#             param -= param.grad * eta
-#         model.zero_grad()
-
-#     return model
 
 
 if __name__ == '__main__':
@@ -101,7 +90,7 @@ if __name__ == '__main__':
 
             # Ygrid, _ = forward(params, data.Xgrid)
             Ygridtilde = model(data.Xgrid)
-            Ygridhat = torch.nn.Softmax()(Ygridtilde) # Softmax is not inside the "model" because "torch.nn.CrossEntropyLoss()" already has it, so you have to do this step to transform "Ygridtilde" in "Ygridhat" 
+            Ygridhat = torch.nn.Softmax(dim=1)(Ygridtilde) # Softmax is not inside the "model" because "torch.nn.CrossEntropyLoss()" already has it, so you have to do this step to transform "Ygridtilde" in "Ygridhat" 
             data.plot_data_with_grid(Ygridhat.detach())
 
     x = np.arange(0, Nepoch, printInterval)
