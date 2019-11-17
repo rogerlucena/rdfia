@@ -12,6 +12,8 @@ import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 datasets.CIFAR10.url = "http://webia.lip6.fr/~robert/cours/rdfia/cifar-10-python.tar.gz" # Permet de télécharger CIFAR10 depuis les serveurs UPMC
 
+# import torch.optim.lr_scheduler
+
 from tme6 import *
 
 PRINT_INTERVAL = 50
@@ -27,7 +29,7 @@ class ConvNet(nn.Module):
         # On défini d'abord les couches de convolution et de pooling comme un
         # groupe de couches `self.features`
         self.features = nn.Sequential(
-            nn.Conv2d(1, 32, (5, 5), stride=1, padding=2),
+            nn.Conv2d(3, 32, (5, 5), stride=1, padding=2),
             nn.ReLU(),
             nn.MaxPool2d((2, 2), stride=2, padding=0),
             nn.Conv2d(32, 64, (5, 5), stride=1, padding=2),
@@ -40,8 +42,9 @@ class ConvNet(nn.Module):
         # On défini les couches fully connected comme un groupe de couches
         # `self.classifier`
         self.classifier = nn.Sequential(
-            nn.Linear(576, 1000),
+            nn.Linear(1024, 1000), # 576: 4*12*12 = 24*24
             nn.ReLU(),
+            nn.Dropout(0.5), # Dropout
             nn.Linear(1000, 10),
             # nn.Softmax(),
             # Rappel : Le softmax est inclus dans la loss, ne pas le mettre ici
@@ -56,58 +59,99 @@ class ConvNet(nn.Module):
         output = self.classifier(output) # on calcule la sortie des fc
         return output
 
-# Original below:
-class ConvNetLeNet5(nn.Module):
-    """
-    Cette classe contient la structure du réseau de neurones
-    """
+# class ConvNetForMNIST(nn.Module):
+#     """
+#     Cette classe contient la structure du réseau de neurones
+#     """
 
-    def __init__(self):
-        super(ConvNet, self).__init__()
-        # On défini d'abord les couches de convolution et de pooling comme un
-        # groupe de couches `self.features`
-        self.features = nn.Sequential(
-            nn.Conv2d(1, 6, (5, 5), stride=1, padding=2),
-            nn.Tanh(),
-            nn.MaxPool2d((2, 2), stride=2, padding=0),
-            nn.Conv2d(6, 16, (5, 5), stride=1, padding=0),
-            nn.Tanh(),
-            nn.MaxPool2d((2, 2), stride=2, padding=0),
-        )
-        # On défini les couches fully connected comme un groupe de couches
-        # `self.classifier`
-        self.classifier = nn.Sequential(
-            nn.Linear(400, 120),
-            nn.Tanh(),
-            nn.Linear(120, 84),
-            nn.Tanh(),
-            nn.Linear(84, 10)
-            # Rappel : Le softmax est inclus dans la loss, ne pas le mettre ici
-        )
+#     def __init__(self):
+#         super(ConvNetForMNIST, self).__init__()
+#         # On défini d'abord les couches de convolution et de pooling comme un
+#         # groupe de couches `self.features`
+#         self.features = nn.Sequential(
+#             nn.Conv2d(1, 32, (5, 5), stride=1, padding=2),
+#             nn.ReLU(),
+#             nn.MaxPool2d((2, 2), stride=2, padding=0),
+#             nn.Conv2d(32, 64, (5, 5), stride=1, padding=2),
+#             nn.ReLU(),
+#             nn.MaxPool2d((2, 2), stride=2, padding=0),
+#             nn.Conv2d(64, 64, (5, 5), stride=1, padding=2),
+#             nn.ReLU(),
+#             nn.MaxPool2d((2, 2), stride=2, padding=0),
+#         )
+#         # On défini les couches fully connected comme un groupe de couches
+#         # `self.classifier`
+#         self.classifier = nn.Sequential(
+#             nn.Linear(576, 1000),
+#             nn.ReLU(),
+#             nn.Linear(1000, 10),
+#             # nn.Softmax(),
+#             # Rappel : Le softmax est inclus dans la loss, ne pas le mettre ici
+#         )
 
-    # méthode appelée quand on applique le réseau à un batch d'input
-    def forward(self, input):
-        bsize = input.size(0) # taille du batch
-        output = self.features(input) # on calcule la sortie des conv
-        output = output.view(bsize, -1) # on applati les feature map 2D en un
-                                        # vecteur 1D pour chaque input
-        output = self.classifier(output) # on calcule la sortie des fc
-        return output
+#     # méthode appelée quand on applique le réseau à un batch d'input
+#     def forward(self, input):
+#         bsize = input.size(0) # taille du batch
+#         output = self.features(input) # on calcule la sortie des conv
+#         output = output.view(bsize, -1) # on applati les feature map 2D en un
+#                                         # vecteur 1D pour chaque input
+#         output = self.classifier(output) # on calcule la sortie des fc
+#         return output
+
+# Original below (LeNet5):
+# class ConvNet(nn.Module):
+#     """
+#     Cette classe contient la structure du réseau de neurones
+#     """
+
+#     def __init__(self):
+#         super(ConvNet, self).__init__()
+#         # On défini d'abord les couches de convolution et de pooling comme un
+#         # groupe de couches `self.features`
+#         self.features = nn.Sequential(
+#             nn.Conv2d(1, 6, (5, 5), stride=1, padding=2),
+#             nn.Tanh(),
+#             nn.MaxPool2d((2, 2), stride=2, padding=0),
+#             nn.Conv2d(6, 16, (5, 5), stride=1, padding=0),
+#             nn.Tanh(),
+#             nn.MaxPool2d((2, 2), stride=2, padding=0),
+#         )
+#         # On défini les couches fully connected comme un groupe de couches
+#         # `self.classifier`
+#         self.classifier = nn.Sequential(
+#             nn.Linear(400, 120),
+#             nn.Tanh(),
+#             nn.Linear(120, 84),
+#             nn.Tanh(),
+#             nn.Linear(84, 10)
+#             # Rappel : Le softmax est inclus dans la loss, ne pas le mettre ici
+#         )
+
+#     # méthode appelée quand on applique le réseau à un batch d'input
+#     def forward(self, input):
+#         bsize = input.size(0) # taille du batch
+#         output = self.features(input) # on calcule la sortie des conv
+#         output = output.view(bsize, -1) # on applati les feature map 2D en un
+#                                         # vecteur 1D pour chaque input
+#         output = self.classifier(output) # on calcule la sortie des fc
+#         return output
 
 
-
+#  New below (with CIFAR10)
 def get_dataset(batch_size, path):
     """
     Cette fonction charge le dataset et effectue des transformations sur chaqu
     image (listées dans `transform=...`).
     """
-    train_dataset = datasets.MNIST(path, train=True, download=True,
+    train_dataset = datasets.CIFAR10(path, train=True, download=True,
         transform=transforms.Compose([
             transforms.ToTensor()
+            # transforms.Normalize(mean=[0.491, 0.482, 0.447], std=[0.202, 0.199, 0.201])
         ]))
-    val_dataset = datasets.MNIST(path, train=False, download=True,
+    val_dataset = datasets.CIFAR10(path, train=False, download=True,
         transform=transforms.Compose([
             transforms.ToTensor()
+            # transforms.Normalize(mean=[0.491, 0.482, 0.447], std=[0.202, 0.199, 0.201])
         ]))
 
     train_loader = torch.utils.data.DataLoader(train_dataset,
@@ -116,6 +160,28 @@ def get_dataset(batch_size, path):
                         batch_size=batch_size, shuffle=False, pin_memory=CUDA, num_workers=2)
 
     return train_loader, val_loader
+
+# # Original below (with MNIST):
+# def get_dataset(batch_size, path):
+#     """
+#     Cette fonction charge le dataset et effectue des transformations sur chaqu
+#     image (listées dans `transform=...`).
+#     """
+#     train_dataset = datasets.MNIST(path, train=True, download=True,
+#         transform=transforms.Compose([
+#             transforms.ToTensor()
+#         ]))
+#     val_dataset = datasets.MNIST(path, train=False, download=True,
+#         transform=transforms.Compose([
+#             transforms.ToTensor()
+#         ]))
+
+#     train_loader = torch.utils.data.DataLoader(train_dataset,
+#                         batch_size=batch_size, shuffle=True, pin_memory=CUDA, num_workers=2)
+#     val_loader = torch.utils.data.DataLoader(val_dataset,
+#                         batch_size=batch_size, shuffle=False, pin_memory=CUDA, num_workers=2)
+
+#     return train_loader, val_loader
 
 
 
@@ -200,7 +266,8 @@ def main(params):
     # define model, loss, optim
     model = ConvNet()
     criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.SGD(model.parameters(), params.lr)
+    optimizer = torch.optim.SGD(model.parameters(), params.lr) # , momentum=0.9)
+    # lr_sched = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.95)
 
     if CUDA: # si on fait du GPU, passage en CUDA
         model = model.cuda()
@@ -219,6 +286,8 @@ def main(params):
         print("=================\n=== EPOCH "+str(i+1)+" =====\n=================\n")
         # Phase de train
         top1_acc, avg_top5_acc, loss = epoch(train, model, criterion, optimizer)
+        # Update the learning rate
+        # lr_sched.step()
         # Phase d'evaluation
         top1_acc_test, top5_acc_test, loss_test = epoch(test, model, criterion)
         # plot
@@ -230,7 +299,7 @@ if __name__ == '__main__':
     # Paramètres en ligne de commande
     parser = argparse.ArgumentParser()
     parser.add_argument('--path', default='/tmp/datasets/mnist', type=str, metavar='DIR', help='path to dataset')
-    parser.add_argument('--epochs', default=5, type=int, metavar='N', help='number of total epochs to run')
+    parser.add_argument('--epochs', default=3, type=int, metavar='N', help='number of total epochs to run') # default: 5
     parser.add_argument('--batch-size', default=128, type=int, metavar='N', help='mini-batch size (default: 128)')
     parser.add_argument('--lr', default=0.1, type=float, metavar='LR', help='learning rate')
     parser.add_argument('--cuda', dest='cuda', action='store_true', help='activate GPU acceleration')
