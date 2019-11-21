@@ -19,6 +19,9 @@ from tme6 import *
 PRINT_INTERVAL = 50
 CUDA = False
 
+def count_parameters(model):
+    return sum(p.numel() for p in model.parameters() if p.requires_grad)
+
 class ConvNet(nn.Module):
     """
     Cette classe contient la structure du réseau de neurones
@@ -268,6 +271,8 @@ def main(params):
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.SGD(model.parameters(), params.lr) # , momentum=0.9)
     # lr_sched = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.95)
+
+    print('Number of paremeters:', count_parameters(model))
 
     if CUDA: # si on fait du GPU, passage en CUDA
         model = model.cuda()
