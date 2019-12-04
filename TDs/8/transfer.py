@@ -37,13 +37,16 @@ def get_dataset(batch_size, path):
 
     train_dataset = datasets.ImageFolder(path+'/train',
         transform=transforms.Compose([ # TODO Pré-traitement à faire
-            transforms.ToTensor()
-            # ,transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+            duplicateChannel,
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         ]))
+        
     val_dataset = datasets.ImageFolder(path+'/test',
         transform=transforms.Compose([ # TODO Pré-traitement à faire
-            transforms.ToTensor()
-            # ,transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+            duplicateChannel,
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         ]))
 
     train_loader = torch.utils.data.DataLoader(train_dataset,
@@ -68,36 +71,56 @@ def extract_features(data, model):
         y = ...
     return X, y
 
+class VGG16relu7(torch.nn.Module): 
+    def __init__(self):
+        super(VGG16relu7, self).__init__()
+        vgg16 = models.vgg16(pretrained=True)
+        # recopier toute la partie convolutionnelle
+        self.features = torch.nn.Sequential(*list(vgg16.features.children()))
+        # garder une partie du classifieur, -2 pour s'arrêter à relu7 
+        self.classifier = torch.nn.Sequential(*list(vgg16.classifier.children())[:-2])
+
+    def forward(self, x):
+        x = self.features(x)
+        x = x.view(x.size(0), -1) 
+        x = self.classifier(x) 
+        return x
+
 
 def main(params):
-    print('Instanciation de VGG16')
-    vgg16 = models.vgg16(pretrained=True)
+    # print('Instanciation de VGG16')
+    # vgg16 = models.vgg16(pretrained=True)
 
-    # print('Instanciation de VGG16relu7')
-    model = vgg16 # TODO À remplacer par un reseau tronché pour faire de la feature extraction
+    print('Instanciation de VGG16relu7')
+    model = VGG16relu7()
 
     model.eval()
     if CUDA: # si on fait du GPU, passage en CUDA
         model = model.cuda()
 
-
+    '''
     imagenet_classes = pickle.load(open('imagenet_classes.pkl', 'rb')) # chargement des 􏰀→ classes
+
     # img = Image.open("cat.jpg")
     img = Image.open("everest.jpg") 
     img = img.resize((224, 224), Image.BILINEAR)
     img = np.array(img, dtype=np.float32) / 255
-    img = img.transpose((2, 0, 1))
+    img = img.transpose((2, 0, 1)) # permutating the axis
+
     # TODO preprocess image
     img = np.expand_dims(img, 0) # transformer en batch contenant une image x = torch.Tensor(img)
     img = torch.from_numpy(img)
-    y = model(img) # TODO calcul forward
+
+    # TODO calcul forward
+    y = model(img)
     ySoftmax = torch.nn.Softmax(dim=1)(y.detach())
     ySoftmax = ySoftmax.detach().numpy() # transformation en array numpy
+
     # TODO récupérer la classe prédite et son score de confiance
     classOutput = np.argmax(ySoftmax)
     print('Class:', imagenet_classes[classOutput], ', confidence:', ySoftmax[0][classOutput])
-
     '''
+    
     # On récupère les données
     print('Récupération des données')
     train, test = get_dataset(params.batch_size, params.path)
@@ -110,7 +133,43 @@ def main(params):
     # TODO Apprentissage et évaluation des SVM à faire
     print('Apprentissage des SVM')
     accuracy = ...
-    '''
+    
+
+'''
+# "main" with only one image below:
+def main(params):
+    print('Instanciation de VGG16')
+    vgg16 = models.vgg16(pretrained=True)
+
+    # print('Instanciation de VGG16relu7')
+    model = vgg16 # TODO À remplacer par un reseau tronché pour faire de la feature extraction
+
+    model.eval()
+    if CUDA: # si on fait du GPU, passage en CUDA
+        model = model.cuda()
+
+    imagenet_classes = pickle.load(open('imagenet_classes.pkl', 'rb')) # chargement des 􏰀→ classes
+
+    # img = Image.open("cat.jpg")
+    img = Image.open("everest.jpg") 
+    img = img.resize((224, 224), Image.BILINEAR)
+    img = np.array(img, dtype=np.float32) / 255
+    img = img.transpose((2, 0, 1)) # permutating the axis
+
+    # TODO preprocess image
+    img = np.expand_dims(img, 0) # transformer en batch contenant une image x = torch.Tensor(img)
+    img = torch.from_numpy(img)
+
+    # TODO calcul forward
+    y = model(img)
+    ySoftmax = torch.nn.Softmax(dim=1)(y.detach())
+    ySoftmax = ySoftmax.detach().numpy() # transformation en array numpy
+
+    # TODO récupérer la classe prédite et son score de confiance
+    classOutput = np.argmax(ySoftmax)
+    print('Class:', imagenet_classes[classOutput], ', confidence:', ySoftmax[0][classOutput])
+
+'''
 
 
 if __name__ == '__main__':
