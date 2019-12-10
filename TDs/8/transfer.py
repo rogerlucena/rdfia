@@ -59,16 +59,19 @@ def get_dataset(batch_size, path):
 
 def extract_features(data, model):
     # TODO init features matrices
-    X = ...
-    y = ...
+    X = torch.tensor()
+    y = torch.tensor()
     for i, (input, target) in enumerate(data):
         if i % PRINT_INTERVAL == 0:
             print('Batch {0:03d}/{1:03d}'.format(i, len(data)))
         if CUDA:
             input = input.cuda()
         # TODO Feature extraction à faire
-        X = ...
-        y = ...
+        feature = model.forward(input)
+        X = torch.cat((X, feature), 0)
+        y = torch.cat((y, target), 0)
+        
+    X = F.normalize(X, p=2, dim=1)
     return X, y
 
 class VGG16relu7(torch.nn.Module): 
@@ -131,8 +134,8 @@ def main(params):
     X_test, y_test = extract_features(test, model)
 
     # TODO Apprentissage et évaluation des SVM à faire
-    print('Apprentissage des SVM')
-    accuracy = ...
+    # print('Apprentissage des SVM')
+    # accuracy = ...
     
 
 '''
