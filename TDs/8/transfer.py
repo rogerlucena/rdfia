@@ -59,8 +59,6 @@ def get_dataset(batch_size, path):
 
 def extract_features(data, model):
     # TODO init features matrices
-    X = torch.tensor()
-    y = torch.tensor()
     for i, (input, target) in enumerate(data):
         if i % PRINT_INTERVAL == 0:
             print('Batch {0:03d}/{1:03d}'.format(i, len(data)))
@@ -68,10 +66,15 @@ def extract_features(data, model):
             input = input.cuda()
         # TODO Feature extraction à faire
         feature = model.forward(input)
-        X = torch.cat((X, feature), 0)
-        y = torch.cat((y, target), 0)
+        if i == 0:
+            print('feature.shape:', feature.size()) # X = feature.reshape((1, -1)) # y = target.reshape((1, -1))
+        # else:
+            # X = torch.cat((X, feature), 0)
+            # y = torch.cat((y, target), 0)
         
-    X = F.normalize(X, p=2, dim=1)
+    # X = F.normalize(X, p=2, dim=1)
+    X = []
+    y = []
     return X, y
 
 class VGG16relu7(torch.nn.Module): 
