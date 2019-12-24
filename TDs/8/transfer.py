@@ -40,14 +40,14 @@ def get_dataset(batch_size, path):
 
     train_dataset = datasets.ImageFolder(path+'/train',
         transform=transforms.Compose([ # TODO Pré-traitement à faire
-            duplicateChannelAndResize,
+            transforms.Lambda(duplicateChannelAndResize),
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         ]))
         
     val_dataset = datasets.ImageFolder(path+'/test',
         transform=transforms.Compose([ # TODO Pré-traitement à faire
-            duplicateChannelAndResize,
+            transforms.Lambda(duplicateChannelAndResize),
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         ]))
@@ -70,17 +70,19 @@ def extract_features(data, model):
         if CUDA:
             input = input.cuda()
         # TODO Feature extraction à faire
+        print('input.shape:', input.size())
         feature = model.forward(input)
 
         # if i == 0:
         #     print('feature.shape:', feature.size()) # X = feature.reshape((1, -1)) # y = target.reshape((1, -1))
         # else:
+        print('feature.shape:', feature.size())
         X = torch.cat((X, feature), 0)
         print('target:', target)
         y = torch.cat((y, target), 0)
 
         # To be faster (just testing)
-        # if i == 100:
+        # if i == 20:
         #     break
         
     X = F.normalize(X, p=2, dim=1)
