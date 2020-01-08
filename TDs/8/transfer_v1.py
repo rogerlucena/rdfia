@@ -81,8 +81,8 @@ def main(params):
 
     imagenet_classes = pickle.load(open('imagenet_classes.pkl', 'rb')) # chargement des 􏰀→ classes
 
-    # img = Image.open("cat.jpg")
-    img = Image.open("everest.jpg") 
+    img = Image.open("cat.jpg")
+    # img = Image.open("everest.jpg") 
     img = img.resize((224, 224), Image.BILINEAR)
     img = np.array(img, dtype=np.float32) / 255
     img = img.transpose((2, 0, 1)) # permutating the axis
