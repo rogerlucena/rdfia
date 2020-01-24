@@ -133,3 +133,8 @@ dmypy.json
 *.aux
 *.out
 *.log
+
+# Specific files
+TDs/bloc-3/tp3_backup.zip
+TDs/bloc-3/data
+TDs/bloc-3/lenet_final.cpkt
